@@ -42,7 +42,7 @@ class GetDataFromETL():
         self.ArreglarConfig()
         self.Frame=cargar_y_preparar_datos(self.config_path, self.ruta_principal)
         self.ArreglarData()
-        self.days=30
+        self.days=90
     
     def ArreglarConfig(self):
         with open(self.config_path, 'r', encoding='utf-8') as f:

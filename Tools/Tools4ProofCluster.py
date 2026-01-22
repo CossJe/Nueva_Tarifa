@@ -138,17 +138,16 @@ class PredictorClusters:
         self.df_final = pd.concat([self.df_In_Kmeans, self.df_NotIn_Kmeans], axis=0).reset_index(drop=True)
         # 1. Define las equivalencias
         mapeo_clusters = {
-            0: 2.5,
-            2: 5,
-            3: 10,
-            5: 0,
-            1: 8.5,
-            4: 7
+            0: 5,
+            2: 7,
+            3: 13,
+            1: 3,
+            4: 0
         }
         
         # 2. Aplica el mapeo a toda la columna
         # Esto creará una nueva columna (o sobreescribirá una) con los valores que buscas
-        self.df_final['Descuento'] = self.df_final['Cluster'].map(mapeo_clusters)
+        self.df_final['Aumento'] = self.df_final['Cluster'].map(mapeo_clusters)
         return self.df_final
         
         

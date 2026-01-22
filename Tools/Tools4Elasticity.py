@@ -10,62 +10,70 @@ import pandas as pd
 import numpy as np
 import os
 import json
+import gc  # Garbage Collector para liberar memoria
 
 class Elasticity():
-    def __init__(self,df):
-        # Obtener el directorio de trabajo actual (ruta principal del proyecto).
+    def __init__(self, df):
         self.ruta_principal = os.getcwd()
-
-        # Construir la ruta al archivo 
         self.json_path = os.path.join(self.ruta_principal, "Files", "Elasticidades.json")
         
-        self.df= df
+        # Trabajamos sobre una referencia para no duplicar el DF original de entrada
+        self.df = df
         self.Get_Elas()
         
     def Get_Elas(self):
-
-        # CORRECCIÓN DE TIPOS (Evitar el TypeError de Categorical)
-        # Convertimos a string para poder concatenar y crear la llave de trayecto
-        self.df['ORIGEN_DESTINO'] = self.df['ORIGEN'].astype(str) + '-' + self.df['DESTINO'].astype(str)
+        # 1. OPTIMIZACIÓN DE TIPOS Y MEMORIA
+        # Convertimos a string y luego a categoría para ahorrar RAM en el agrupamiento
+        self.df['ORIGEN_DESTINO'] = (self.df['ORIGEN'].astype(str) + '-' + 
+                                     self.df['DESTINO'].astype(str)).astype('category')
         
-        # AGRUPACIÓN
-        # Consolidamos ventas y boletos por trayecto y fecha
-        df_agrupado = self.df.groupby(['ORIGEN_DESTINO', 'FECHA_CORRIDA', 'CV_CORRIDA']).agg({
+        # 2. PRIMERA AGRUPACIÓN (Optimizada con as_index=False y sin .copy())
+        df_agrupado = self.df.groupby(['ORIGEN_DESTINO', 'FECHA_CORRIDA', 'CV_CORRIDA'], 
+                                      as_index=False, observed=True).agg({
             'INGRESO_TEORICO_TRAMO': 'mean',
             'INGRESO_TRANSP': 'mean',
             'CAPACIDAD_ASIENTOS_TRAMO': 'mean',
             'OCUPACION_TRAMO': 'mean'
-        }).reset_index().copy()
+        })
         
-        a= df_agrupado.groupby(['ORIGEN_DESTINO','FECHA_CORRIDA']).agg({
-        'INGRESO_TEORICO_TRAMO': 'sum',
-        'INGRESO_TRANSP': 'sum',
-        'CAPACIDAD_ASIENTOS_TRAMO': 'sum',
-        'OCUPACION_TRAMO': 'sum'}).reset_index().copy()
+        df_agrupado['INGRESO_TEORICO']= (df_agrupado['INGRESO_TEORICO_TRAMO']/df_agrupado['OCUPACION_TRAMO'])*df_agrupado['CAPACIDAD_ASIENTOS_TRAMO']              
+        # Liberamos memoria del DataFrame original si ya no se usará
+        # self.df = None 
+        # gc.collect()
+
+        # 3. SEGUNDA AGRUPACIÓN
+        # Eliminamos .copy() ya que agg() ya genera un objeto nuevo
+        a = df_agrupado.groupby(['ORIGEN_DESTINO','FECHA_CORRIDA'], 
+                                as_index=False, observed=True).agg({
+            'INGRESO_TEORICO': 'sum',
+            'INGRESO_TRANSP': 'sum',
+            'CAPACIDAD_ASIENTOS_TRAMO': 'sum',
+            'OCUPACION_TRAMO': 'sum'
+        })
         
-        # 3. PREPARACIÓN CRONOLÓGICA
-        # Aseguramos que las fechas sean objetos datetime y ordenamos
+        # Liberar el dataframe intermedio
+        del df_agrupado
+        gc.collect()
+        
+        # 4. PREPARACIÓN CRONOLÓGICA
         a['FECHA_CORRIDA'] = pd.to_datetime(a['FECHA_CORRIDA'])
-        a = a.sort_values(by=['ORIGEN_DESTINO', 'FECHA_CORRIDA'])
-        a['Day']=a['FECHA_CORRIDA'].dt.day_name()
+        # inplace=True evita crear una copia adicional en memoria al ordenar
+        a.sort_values(by=['ORIGEN_DESTINO', 'FECHA_CORRIDA'], inplace=True)
+        a['Day'] = a['FECHA_CORRIDA'].dt.day_name().astype('category') # Categoría es más ligera que string
         
-        # CÁLCULO DE VARIABLES DERIVADAS
-        # Calculamos el precio promedio por boleto para cada día
-        a['%P']=(a['INGRESO_TEORICO_TRAMO']-a['INGRESO_TRANSP'])/a['INGRESO_TRANSP']
-        a['%D']= (a['CAPACIDAD_ASIENTOS_TRAMO']-a['OCUPACION_TRAMO'])/a['OCUPACION_TRAMO']
-        # CÁLCULO DE VARIACIONES PORCENTUALES (%Δ)
-        # Usamos groupby para que el cambio porcentual no se mezcle entre trayectos distintos
-        # Esto equivale a tu fórmula: (Siguiente - Anterior) / Anterior
-        #a['PCT_CHANGE_DEMANDA'] = a.groupby('ORIGEN_DESTINO')['BOLETOS_VEND'].pct_change()
-        #a['PCT_CHANGE_PRECIO'] = a.groupby('ORIGEN_DESTINO')['PRECIO_PROM'].pct_change()
+        # 5. CÁLCULO DE VARIABLES DERIVADAS (Lógica original)
+        # Realizamos las operaciones directamente (vectorizadas)
+        a['%P'] = ( a['INGRESO_TRANSP']-a['INGRESO_TEORICO']) / a['INGRESO_TEORICO']
+        a['%D'] = ( a['OCUPACION_TRAMO']-a['CAPACIDAD_ASIENTOS_TRAMO']) / a['CAPACIDAD_ASIENTOS_TRAMO']
         
-        # CÁLCULO DE ELASTICIDAD PRECIO DE LA DEMANDA
-        # E = % Cambio en Cantidad / % Cambio en Precio
-        #a['ELASTICIDAD'] = a['PCT_CHANGE_DEMANDA'] / a['PCT_CHANGE_PRECIO']
+        # 6. ELASTICIDAD
         a['ELASTICIDAD'] = a['%D'] / a['%P']
+        
         # 7. LIMPIEZA DE RESULTADOS
-        # Reemplazamos infinitos (cuando el precio no cambió) por NaN
-        a['ELASTICIDADES'] = a['ELASTICIDAD'].replace([np.inf, -np.inf], np.nan)
+        # Usamos inplace para no generar otro DF
+        a['ELASTICIDAD'].replace([np.inf, -np.inf], np.nan, inplace=True)
         
-        self.Df=a
+        # Renombramos o asignamos según tu lógica
+        a.rename(columns={'ELASTICIDAD': 'ELASTICIDADES'}, inplace=True)
         
+        self.Df = a

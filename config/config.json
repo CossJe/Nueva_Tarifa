@@ -27,9 +27,23 @@
     "Ruta": {
         "ORIG": [
             "MEXN",
+            "GDLJ",
+            "LEON",
+            "MORE",
+            "MXST",
+            "MEXN",
+            "MEXN",
+            "MANZ",
             "ZACA"
         ],
         "DEST": [
+            "GDLJ",
+            "MEXN",
+            "MEXN",
+            "MEXN",
+            "QUER",
+            "SNMA",
+            "URUA",
             "GDLJ",
             "AGUA"
         ]
