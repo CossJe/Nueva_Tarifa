@@ -27,16 +27,22 @@ class Elasticity():
         self.df['ORIGEN_DESTINO'] = (self.df['ORIGEN'].astype(str) + '-' + 
                                      self.df['DESTINO'].astype(str)).astype('category')
         
+        
         # 2. PRIMERA AGRUPACIÓN (Optimizada con as_index=False y sin .copy())
         df_agrupado = self.df.groupby(['ORIGEN_DESTINO', 'FECHA_CORRIDA', 'CV_CORRIDA'], 
                                       as_index=False, observed=True).agg({
             'INGRESO_TEORICO_TRAMO': 'mean',
+            'TARIFA_BASE_TRAMO':'mean',
             'INGRESO_TRANSP': 'mean',
             'CAPACIDAD_ASIENTOS_TRAMO': 'mean',
-            'OCUPACION_TRAMO': 'mean'
+            'OCUPACION_TRAMO': 'mean',
+            'PAX_SUBEN':'mean',
+            'DISPONIBILIDAD_TRAMO':'mean'
         })
         
-        df_agrupado['INGRESO_TEORICO']= (df_agrupado['INGRESO_TEORICO_TRAMO']/df_agrupado['OCUPACION_TRAMO'])*df_agrupado['CAPACIDAD_ASIENTOS_TRAMO']              
+        df_agrupado['Q']= df_agrupado['PAX_SUBEN']+df_agrupado['DISPONIBILIDAD_TRAMO']
+                                          
+        df_agrupado['INGRESO_TEORICO']= df_agrupado['TARIFA_BASE_TRAMO']*df_agrupado['Q']              
         # Liberamos memoria del DataFrame original si ya no se usará
         # self.df = None 
         # gc.collect()
@@ -47,8 +53,8 @@ class Elasticity():
                                 as_index=False, observed=True).agg({
             'INGRESO_TEORICO': 'sum',
             'INGRESO_TRANSP': 'sum',
-            'CAPACIDAD_ASIENTOS_TRAMO': 'sum',
-            'OCUPACION_TRAMO': 'sum'
+            'Q': 'sum',
+            'DISPONIBILIDAD_TRAMO': 'sum'
         })
         
         # Liberar el dataframe intermedio
@@ -64,7 +70,7 @@ class Elasticity():
         # 5. CÁLCULO DE VARIABLES DERIVADAS (Lógica original)
         # Realizamos las operaciones directamente (vectorizadas)
         a['%P'] = ( a['INGRESO_TRANSP']-a['INGRESO_TEORICO']) / a['INGRESO_TEORICO']
-        a['%D'] = ( a['OCUPACION_TRAMO']-a['CAPACIDAD_ASIENTOS_TRAMO']) / a['CAPACIDAD_ASIENTOS_TRAMO']
+        a['%D'] = -a['DISPONIBILIDAD_TRAMO'] / a['Q']
         
         # 6. ELASTICIDAD
         a['ELASTICIDAD'] = a['%D'] / a['%P']

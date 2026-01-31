@@ -39,24 +39,24 @@ from Tools.Tools4ProofCluster import PredictorClusters
 
 Data= GetDataFromETL(False)
 
-#Df_ClusSuper= Data.D4_ClusteringSuper()
-
-# Entrena modelo ClusteringSupervisado
-#clustering = ClusteringSupervisado()
-
-
-# Crear predictor con el modelo entrenado
-#predictor = PredictorClusters(Df_ClusSuper)
-#resultados= predictor.Get_values()
-
-
-
-"""
-
 #Elasticidad
 Df_Elas= Data.D4_Elasticity() # Extraccion de los datos para elasticidad
 
 Elas4OriDest= Elasticity(Df_Elas).Df
+
+"""
+
+
+
+Df_ClusSuper= Data.D4_ClusteringSuper()
+
+# Entrena modelo ClusteringSupervisado
+clustering = ClusteringSupervisado()
+
+
+# Crear predictor con el modelo entrenado
+predictor = PredictorClusters(Df_ClusSuper)
+resultados= predictor.Get_values()
 
 
 Df_TRN= Data.D4_Train_NN() # Extraccion de datos para entrenar la Red Neuronal

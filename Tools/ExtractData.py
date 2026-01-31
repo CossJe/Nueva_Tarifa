@@ -42,7 +42,7 @@ class GetDataFromETL():
         self.ArreglarConfig()
         self.Frame=cargar_y_preparar_datos(self.config_path, self.ruta_principal)
         self.ArreglarData()
-        self.days=90
+        self.days=101
     
     def ArreglarConfig(self):
         with open(self.config_path, 'r', encoding='utf-8') as f:
@@ -281,7 +281,7 @@ class GetDataFromETL():
         return Df
     
     def D4_Elasticity(self):
-        df= self.Frame[['BOLETOS_VEND','BOLETOS_CANCEL', 'BOLETOS_TOTALES',
+        df= self.Frame[['PAX_SUBEN','DISPONIBILIDAD_TRAMO','TARIFA_BASE_TRAMO',
                         "FECHA_CORRIDA", "HORA_SALIDA_CORRIDA", 
                         'INGRESO_TEORICO_TRAMO', 'INGRESO_TRANSP','OCUPACION_TRAMO',
                         'ORIGEN', 'DESTINO','TIPO_PASAJERO','CAPACIDAD_ASIENTOS_TRAMO',
@@ -295,6 +295,6 @@ class GetDataFromETL():
         
         # Filtramos: tomamos todos los datos cuyo año sea menor al año máximo
         # Esto excluye el año actual (el más grande) y deja todo lo anterior
-        df = df[df['FECHA_CORRIDA'].dt.year < anio_maximo].copy()
+        df = df[df['FECHA_CORRIDA'].dt.year == anio_maximo-1].copy()
         
         return df
