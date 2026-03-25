@@ -32,4 +32,4 @@ WHERE
     "ORIGEN" IN ( VAR_ORIG_SQL ) AND
     "DESTINO" IN ( VAR_DEST_SQL ) AND 
     "TIPO_OPERACION" IN ( 'AM', 'BM', 'CE', 'CS', 'NE', 'NS' ) AND
-    "ANIO" >= '2023'
+    "ANIO" >= ANIOO

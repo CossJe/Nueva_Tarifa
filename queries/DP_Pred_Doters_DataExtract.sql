@@ -11,4 +11,4 @@ FROM DATA
 WHERE 
     "ORIGEN" IN ( VAR_ORIG_SQL ) AND
     "DESTINO" IN ( VAR_DEST_SQL ) AND 
-    "AÑO" >= '2023'
+    "AÑO" >= ANIOO

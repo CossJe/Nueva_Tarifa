@@ -53,5 +53,10 @@
         "FIK_SQL_File": "DP_Pred_FIK_DataExtract.sql",
         "Doters_SQL_File": "DP_Pred_Doters_DataExtract.sql",
         "DB2_SQL_File": "DP_Pred_DB2_DataExtract.sql"
+    },
+    "year": {
+        "Anio": [
+            "2025"
+        ]
     }
 }

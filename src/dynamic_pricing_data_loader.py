@@ -30,19 +30,20 @@ def cargar_y_preparar_datos(config_path, ruta_principal):
     # Convertir listas a formato SQL
     origen_sql = ', '.join(f"'{o}'" for o in config["Ruta"]["ORIG"])
     destino_sql = ', '.join(f"'{d}'" for d in config["Ruta"]["DEST"])
-    
+    anio_sql= ', '.join(f"'{a}'" for a in config["year"]["Anio"])
+    anio=anio_sql+'-01-01'
     # Leer y procesar consultas SQL
     with open(mc_sql_file, 'r', encoding='utf-8') as file:
-        mc_query = file.read().replace("VAR_ORIG_SQL", origen_sql).replace("VAR_DEST_SQL", destino_sql)
+        mc_query = file.read().replace("VAR_ORIG_SQL", origen_sql).replace("VAR_DEST_SQL", destino_sql).replace("ANIOO", anio_sql)
     
     with open(fik_sql_file, 'r', encoding='utf-8') as file:
-        fik_query = file.read().replace("VAR_ORIG_SQL", origen_sql).replace("VAR_DEST_SQL", destino_sql)
+        fik_query = file.read().replace("VAR_ORIG_SQL", origen_sql).replace("VAR_DEST_SQL", destino_sql).replace("ANIOO", anio_sql)
     
     with open(doters_sql_file, 'r', encoding='utf-8') as file:
-        dot_query = file.read().replace("VAR_ORIG_SQL", origen_sql).replace("VAR_DEST_SQL", destino_sql)
+        dot_query = file.read().replace("VAR_ORIG_SQL", origen_sql).replace("VAR_DEST_SQL", destino_sql).replace("ANIOO", anio_sql)
     
     with open(db2_sql_file, 'r', encoding='utf-8') as file:
-        db2_query = file.read().replace("VAR_ORIG_SQL", origen_sql).replace("VAR_DEST_SQL", destino_sql)
+        db2_query = file.read().replace("VAR_ORIG_SQL", origen_sql).replace("VAR_DEST_SQL", destino_sql).replace("ANIOO", anio)
     
     # Extraer datos
     mc = DIVER_ODBC_Extraction(config["TLU_MC"], mc_query)
